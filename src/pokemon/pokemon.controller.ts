@@ -40,7 +40,7 @@ export class PokemonController {
     }
 
     @Delete(':id')
-    remove(@Param('id') id: string) {
+    remove(@Param('id', ParseMongoIdPipe) id: string) {
         return this.pokemonService.remove(id);
     }
 }
