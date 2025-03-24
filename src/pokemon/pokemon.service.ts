@@ -12,8 +12,7 @@ import { Pokemon } from './entities/pokemon.entity';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 /**
- * @Injectable()
- * Hace que PokemonService pueda ser inyectado en otros servicios o controladores.
+ * Servicio para gestionar las operaciones relacionadas con los Pokémon en la base de datos.
  */
 @Injectable()
 export class PokemonService {
@@ -21,13 +20,18 @@ export class PokemonService {
         /**
          * @InjectModel()
          * Inyecta el modelo Pokemon de Mongoose en el servicio para realizar operaciones en la base de datos.
-         * Recuerda que primer se debe Registra el modelo Pokemon para que NestJS pueda inyectarlo en el servicio. en pokemon.module.ts
+         * Se debe registrar el modelo en pokemon.module.ts con:
          * MongooseModule.forFeature([{ name: Pokemon.name, schema: PokemonSchema }])
          */
         @InjectModel(Pokemon.name)
         private readonly pokemonModel: Model<Pokemon>,
     ) {}
 
+    /**
+     * Crea un nuevo Pokémon en la base de datos.
+     * @param createPokemonDto - Datos del Pokémon a crear.
+     * @returns El Pokémon creado.
+     */
     async create(createPokemonDto: CreatePokemonDto) {
         createPokemonDto.name = createPokemonDto.name.toLowerCase();
         try {
@@ -38,17 +42,25 @@ export class PokemonService {
         }
     }
 
-    findAll( request: PaginationDto ) {
+    /**
+     * Obtiene una lista paginada de todos los Pokémon.
+     * @param request - Parámetros de paginación (límite y offset).
+     * @returns Lista de Pokémon con paginación aplicada.
+     */
+    findAll(request: PaginationDto) {
         const { limit = 10, offset = 0 } = request;
         return this.pokemonModel.find()
             .limit(limit)
             .skip(offset)
-            .sort({
-                no: 1
-            })
-            .select('-__v');
+            .sort({ no: 1 }) // Ordena por número de Pokémon
+            .select('-__v'); // Excluye la versión del documento
     }
 
+    /**
+     * Busca un Pokémon por número, ID de MongoDB o nombre.
+     * @param term - Número, ID o nombre del Pokémon.
+     * @returns El Pokémon encontrado o lanza una excepción si no existe.
+     */
     async findOne(term: string) {
         let pokemon;
 
@@ -57,7 +69,7 @@ export class PokemonService {
         }
 
         if (isValidObjectId(term)) {
-            pokemon = this.pokemonModel.findById(term);
+            pokemon = await this.pokemonModel.findById(term);
         }
 
         if (!pokemon) {
@@ -74,6 +86,12 @@ export class PokemonService {
         return pokemon;
     }
 
+    /**
+     * Actualiza un Pokémon en la base de datos.
+     * @param term - Número, ID o nombre del Pokémon a actualizar.
+     * @param updatePokemonDto - Datos a actualizar.
+     * @returns El Pokémon actualizado.
+     */
     async update(term: string, updatePokemonDto: UpdatePokemonDto) {
         try {
             const pokemon: Pokemon = await this.findOne(term);
@@ -93,18 +111,21 @@ export class PokemonService {
         }
     }
 
+    /**
+     * Elimina un Pokémon de la base de datos.
+     * @param id - ID del Pokémon a eliminar.
+     * @returns Nada si la eliminación es exitosa, lanza una excepción si no se encuentra el Pokémon.
+     */
     async remove(id: string) {
         try {
-            // De este modo se hacen dos consultas, pero hay un mejor modo
-            // const pokemon = await this.findOne(id);
-            // await pokemon.deleteOne();
-            // Es es la manera mas optima de eliminar por un  mongo ID
+            // Método óptimo para eliminar un documento en MongoDB por su ID
             const { deletedCount } = await this.pokemonModel.deleteOne({
                 _id: id,
             });
+
             if (deletedCount === 0)
                 throw new BadRequestException(
-                    `Pokemón with id "${id}" not found`,
+                    `Pokemón con ID "${id}" no encontrado`,
                 );
 
             return;
@@ -113,6 +134,12 @@ export class PokemonService {
         }
     }
 
+    /**
+     * Maneja las excepciones generadas en las operaciones con la base de datos.
+     * @param error - Error capturado.
+     * @throws BadRequestException si hay un error de duplicado.
+     * @throws InternalServerErrorException para otros errores desconocidos.
+     */
     private handleExceptions(error: any) {
         if (error.code === 11000)
             throw new BadRequestException(
