@@ -25,7 +25,9 @@ import { JoiValidationSchema } from './config/joi.validation';
         }),
 
         // Conexión a la base de datos MongoDB usando Mongoose
-        MongooseModule.forRoot(process.env.MONGODB as string), // Se obtiene la URL desde las variables de entorno
+        MongooseModule.forRoot(process.env.MONGODB as string, {
+            dbName: 'db_pokemon'
+        }), // Se obtiene la URL desde las variables de entorno
 
         // Importa el módulo de Pokémon, que gestiona la lógica relacionada con los Pokémon
         PokemonModule,
@@ -39,9 +41,4 @@ import { JoiValidationSchema } from './config/joi.validation';
     controllers: [], // Aquí se pueden definir los controladores de la aplicación
     providers: [], // Aquí se pueden definir los servicios y proveedores de la aplicación
 })
-export class AppModule {
-
-    constructor() {
-        console.log(process.env.PORT);
-    }
-}
+export class AppModule {}
