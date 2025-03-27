@@ -21,7 +21,16 @@ npm i -g @nestjs/cli
 docker compose up -d
 ```
 
-5. Reconstruir la base de datos
+5. Clonar el archivo ___.env.template___ y renombrarlo a ___.env___
+
+6. Llenar las variables de entorno definidas en el ```.env```
+
+7. Ejecutar la aplicacion en dev: 
+```
+npm run start:dev
+```
+
+8. Reconstruir la base de datos
 Solo se ejecuta en desarrollo
 ```
 localhost:3000/api/v2/seed
@@ -38,5 +47,6 @@ https://docs.nestjs.com/techniques/mongodb
 npm i @nestjs/mongoose mongoose
 
 ```
+
 
 
